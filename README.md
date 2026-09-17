@@ -27,6 +27,24 @@ No build step is required. Open `index.html` in a modern web browser.
 
 ChatGPT was used as an AI coding assistant during development.
 
-## Open-source reference
+## Open-Source Reference
 
-An open-source project with comparable functionality will be identified and documented here as part of the course assignment.
+This project was developed with reference to HTMLPlinko by Trent Pierce:
+
+https://github.com/TrentPierce/HTMLPlinko
+
+HTMLPlinko is an open-source browser-based Plinko game built with HTML,
+CSS, and JavaScript. It provides a comparable example of a browser-based
+Plinko game with ball physics, peg collisions, and prize slots.
+
+Plinko Reveal is a separate implementation and does not copy the
+reference project's source code. It expands on the basic Plinko concept
+with an image-reveal mechanic, hidden randomized point-cost buckets,
+multiple board configurations, image positioning controls, and
+importable/exportable configuration data.
+
+## AI Tools
+
+ChatGPT was used as an AI coding assistant during development, including
+assistance with JavaScript game logic, HTML/CSS layout, debugging, and
+project organization.
