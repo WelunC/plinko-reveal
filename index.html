@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plinko Reveal Proof of Concept</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar">
+      <div class="panel">
+        <div class="hide-sidebar-wrap">
+          <button id="toggleSidebarBtn">Hide Left Panel</button>
+        </div>
+        <h1>Plinko Reveal</h1>
+        <div class="subtle">
+          Proof of concept for preset boards, image positioning, multiple image links, and exportable config data.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Board & Image</h2>
+
+        <div class="field">
+          <label for="presetSelect">Board Preset</label>
+          <select id="presetSelect"></select>
+        </div>
+
+        <div class="field">
+          <label for="imageUrls">Image URLs (one per line)</label>
+          <textarea id="imageUrls" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"></textarea>
+        </div>
+
+        <div class="row wrap" style="margin-bottom:10px;">
+          <button id="loadRandomImageBtn" class="primary">Load Random URL Image</button>
+          <input id="imageFileInput" type="file" accept="image/*" />
+        </div>
+
+        <div class="field">
+          <label for="imageScale">Image Scale: <span id="imageScaleValue">1.00</span></label>
+          <input id="imageScale" type="range" min="0.4" max="2.2" step="0.01" value="1" />
+        </div>
+
+        <div class="field">
+          <label for="imageOffsetX">Image X Offset: <span id="imageOffsetXValue">0</span></label>
+          <input id="imageOffsetX" type="range" min="-500" max="500" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="imageOffsetY">Image Y Offset: <span id="imageOffsetYValue">0</span></label>
+          <input id="imageOffsetY" type="range" min="-500" max="500" step="1" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="revealRadius">Reveal Radius: <span id="revealRadiusValue">18</span></label>
+          <input id="revealRadius" type="range" min="6" max="40" step="1" value="18" />
+        </div>
+
+        <div class="row wrap">
+          <button id="applySettingsBtn">Apply Settings</button>
+          <button id="resetBoardBtn">Reset Board</button>
+        </div>
+
+        <div id="imageStatus" class="status" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Config JSON</h2>
+
+        <div class="field">
+          <label for="configName">Config Name</label>
+          <input id="configName" type="text" value="Example Reveal Board" />
+        </div>
+
+        <div class="field">
+          <label for="configJson">Export / Import</label>
+          <textarea id="configJson" class="mono"></textarea>
+        </div>
+
+        <div class="row wrap">
+          <button id="exportConfigBtn" class="primary">Export Current Config</button>
+          <button id="importConfigBtn">Import Config</button>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          This is the data shape you can eventually store on your server.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls</h2>
+        <div class="subtle">
+          Click near the top guide line on the board to drop a ball there.<br>
+          Or use the center drop button above the board.<br><br>
+          Point costs are shown before the round, but their bottom slot order is hidden and shuffled. Start with 1,000 points and try to reveal at least 50% of the image while keeping as many points as possible.
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="game-layout">
+        <div class="side-column rewards-side">
+          <div class="rewards-wrap">
+            <h2 style="margin-bottom:8px;">Possible Point Costs This Round</h2>
+            <div class="reward-list" id="rewardList"></div>
+          </div>
+        </div>
+
+        <div class="center-column">
+          <div class="rewards-wrap controls-panel">
+            <div class="row wrap">
+              <button id="toggleSidebarFloatingBtn">Hide Left Panel</button>
+              <button id="dropCenterBtn" class="primary">Drop Center</button>
+              <button id="newRoundBtn">New Round</button>
+              <button id="clearImageBtn" class="danger">Use Fallback Image</button>
+            </div>
+            <div class="small" style="margin-top:8px;">Auto drop guide moves across the top of the board. Use the drop button beside Points Remaining to release from its current position.</div>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="gameCanvas" width="1000" height="1280"></canvas>
+          </div>
+        </div>
+
+        <div class="side-column hud-column">
+          <div class="statbar">
+            <div class="stat">
+              <div class="stat-head">
+                <span class="k">Points Remaining</span>
+                <button id="dropTickerBtn" class="primary mini-btn drop-btn-inline">Drop Ball</button>
+              </div>
+              <span class="v" id="scoreValue">0</span>
+            </div>
+            <div class="stat">
+              <span class="k">Balls Used</span>
+              <span class="v" id="ballsValue">0</span>
+            </div>
+            <div class="stat">
+              <span class="k">Last Result</span>
+              <span class="v" id="lastResultValue">-</span>
+            </div>
+            <div class="stat">
+              <span class="k">Image Revealed</span>
+              <span class="v" id="revealedValue">0.0%</span>
+            </div>
+            <div class="stat">
+              <span class="k">Goal</span>
+              <span class="v">Reveal 75%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
