@@ -28,6 +28,16 @@
         </div>
 
         <div class="field">
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect">
+            <option value="easy">Easy — 1,500 points, radius 24</option>
+            <option value="normal" selected>Normal — 1,000 points, radius 18</option>
+            <option value="hard">Hard — 650 points, radius 12</option>
+          </select>
+          <div class="small">Changing difficulty starts a new round. You can still customize the reveal radius below.</div>
+        </div>
+
+        <div class="field">
           <label for="imageUrls">Image URLs (one per line)</label>
           <textarea id="imageUrls" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"></textarea>
         </div>
@@ -93,7 +103,7 @@
         <div class="subtle">
           Click near the top guide line on the board to drop a ball there.<br>
           Or use the center drop button above the board.<br><br>
-          Point costs are shown before the round, but their bottom slot order is hidden and shuffled. Start with 1,000 points and try to reveal at least 50% of the image while keeping as many points as possible.
+          Point costs are shown before the round, but their bottom slot order is hidden and shuffled. Try to reveal at least 75% of the image while keeping as many points as possible.
         </div>
       </div>
     </div>

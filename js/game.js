@@ -11,6 +11,7 @@
       const toggleSidebarFloatingBtn = document.getElementById("toggleSidebarFloatingBtn");
 
       const presetSelect = document.getElementById("presetSelect");
+      const difficultySelect = document.getElementById("difficultySelect");
       const imageUrlsEl = document.getElementById("imageUrls");
       const imageFileInput = document.getElementById("imageFileInput");
       const imageScaleEl = document.getElementById("imageScale");
@@ -134,8 +135,12 @@
       let pegs = [];
 
       let balls = [];
-      const STARTING_POINTS = 1000;
-      let score = STARTING_POINTS;
+      const DIFFICULTIES = Object.freeze({
+        easy: { startingPoints: 1500, revealRadius: 24 },
+        normal: { startingPoints: 1000, revealRadius: 18 },
+        hard: { startingPoints: 650, revealRadius: 12 }
+      });
+      let score = DIFFICULTIES.normal.startingPoints;
       let ballsUsed = 0;
       let lastResult = "-";
 
@@ -162,6 +167,7 @@
       const config = {
         name: "Example Reveal Board",
         preset: "wide",
+        difficulty: "normal",
         imageUrls: [],
         imageSettings: {
           scale: 1,
@@ -400,6 +406,7 @@
       function syncConfigFromControls() {
         config.name = configNameEl.value.trim() || "Untitled Reveal Board";
         config.preset = presetSelect.value;
+        config.difficulty = difficultySelect.value;
         config.imageUrls = getImageUrlList();
         config.imageSettings.scale = Number(imageScaleEl.value);
         config.imageSettings.offsetX = Number(imageOffsetXEl.value);
@@ -410,6 +417,7 @@
       function syncControlsFromConfig() {
         configNameEl.value = config.name || "Untitled Reveal Board";
         presetSelect.value = config.preset || "wide";
+        difficultySelect.value = DIFFICULTIES[config.difficulty] ? config.difficulty : "normal";
         imageUrlsEl.value = (config.imageUrls || []).join("\n");
         imageScaleEl.value = String(config.imageSettings?.scale ?? 1);
         imageOffsetXEl.value = String(config.imageSettings?.offsetX ?? 0);
@@ -450,7 +458,7 @@
 
       function resetRound() {
         balls = [];
-        score = STARTING_POINTS;
+        score = DIFFICULTIES[config.difficulty].startingPoints;
         ballsUsed = 0;
         lastResult = "-";
         createRevealMask();
@@ -936,6 +944,7 @@
         const data = {
           name: config.name,
           preset: config.preset,
+          difficulty: config.difficulty,
           imageUrls: config.imageUrls,
           imageSettings: {
             scale: config.imageSettings.scale,
@@ -959,13 +968,17 @@
 
         config.name = data.name || "Imported Reveal Board";
         config.preset = data.preset && BOARD_PRESETS[data.preset] ? data.preset : "wide";
+        config.difficulty = DIFFICULTIES[data.difficulty] ? data.difficulty : "normal";
         config.imageUrls = Array.isArray(data.imageUrls) ? data.imageUrls : [];
         config.imageSettings = {
           scale: Number(data.imageSettings?.scale ?? 1),
           offsetX: Number(data.imageSettings?.offsetX ?? 0),
           offsetY: Number(data.imageSettings?.offsetY ?? 0)
         };
-        config.revealRadius = Number(data.revealRadius ?? 18);
+        const importedRadius = Number(data.revealRadius);
+        config.revealRadius = Number.isFinite(importedRadius) && importedRadius >= 6 && importedRadius <= 40
+          ? importedRadius
+          : DIFFICULTIES[config.difficulty].revealRadius;
         config.rewards = Array.isArray(data.rewards) && data.rewards.length
           ? data.rewards
           : DEFAULT_REWARDS.slice();
@@ -987,6 +1000,7 @@
         const initial = {
           name: config.name,
           preset: config.preset,
+          difficulty: config.difficulty,
           imageUrls: config.imageUrls,
           imageSettings: {
             scale: config.imageSettings.scale,
@@ -1000,6 +1014,16 @@
       }
 
       function hookEvents() {
+        difficultySelect.addEventListener("change", () => {
+          const difficulty = DIFFICULTIES[difficultySelect.value];
+          if (!difficulty) return;
+          revealRadiusEl.value = String(difficulty.revealRadius);
+          refreshSliderLabels();
+          syncConfigFromControls();
+          resetRound();
+          setStatus(`Difficulty set to ${difficultySelect.options[difficultySelect.selectedIndex].text.split(" — ")[0]}. New round started.`, "good");
+        });
+
         presetSelect.addEventListener("change", () => {
           syncConfigFromControls();
           applyPreset(presetSelect.value);
