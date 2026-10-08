@@ -29,6 +29,10 @@
       const ballsValue = document.getElementById("ballsValue");
       const lastResultValue = document.getElementById("lastResultValue");
       const revealedValue = document.getElementById("revealedValue");
+      const personalBestValue = document.getElementById("personalBestValue");
+      const personalBestDetails = document.getElementById("personalBestDetails");
+      const allRecordsValue = document.getElementById("allRecordsValue");
+      const clearRecordsBtn = document.getElementById("clearRecordsBtn");
       const rewardListEl = document.getElementById("rewardList");
 
       const dropCenterBtn = document.getElementById("dropCenterBtn");
@@ -140,8 +144,48 @@
         normal: { startingPoints: 1000, revealRadius: 18 },
         hard: { startingPoints: 650, revealRadius: 12 }
       });
+      const RECORDS_KEY = "plinko-reveal-high-scores-v1";
+      let records = loadRecords();
+
+      function loadRecords() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(RECORDS_KEY) || "{}");
+          if (!saved || typeof saved !== "object" || Array.isArray(saved)) return {};
+          const valid = {};
+          for (const mode of Object.keys(DIFFICULTIES)) {
+            const r = saved[mode];
+            if (r && Number.isInteger(r.tenths) && r.tenths >= 0 && r.tenths <= 1000 &&
+                Number.isFinite(r.points) && r.points >= 0 && Number.isInteger(r.balls) && r.balls > 0) {
+              valid[mode] = { tenths: r.tenths, points: r.points, balls: r.balls };
+            }
+          }
+          return valid;
+        } catch (_) { return {}; }
+      }
+
+      function recordCurrentProgress() {
+        if (ballsUsed === 0) return;
+        const mode = config.difficulty;
+        const tenths = Math.round((revealCount / (revealEstimateCols * revealEstimateRows)) * 1000);
+        const old = records[mode];
+        if (old && (tenths < old.tenths || (tenths === old.tenths && score <= old.points))) return;
+        records[mode] = { tenths, points: score, balls: ballsUsed };
+        try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); }
+        catch (_) { /* Private browsing or storage restrictions: records last until reload. */ }
+      }
+
+      function renderRecords() {
+        const best = records[config.difficulty];
+        personalBestValue.textContent = best ? `${(best.tenths / 10).toFixed(1)}%` : "—";
+        personalBestDetails.textContent = best ? `${best.points} points remaining · ${best.balls} balls` : "No attempts yet";
+        allRecordsValue.textContent = Object.keys(DIFFICULTIES)
+          .map(mode => `${mode[0].toUpperCase() + mode.slice(1)}: ${records[mode] ? (records[mode].tenths / 10).toFixed(1) + "%" : "—"}`)
+          .join(" | ");
+      }
+
       let score = DIFFICULTIES.normal.startingPoints;
       let ballsUsed = 0;
+      let gameOver = false;
       let lastResult = "-";
 
       let rewardPool = [];
@@ -457,6 +501,7 @@
       }
 
       function resetRound() {
+        gameOver = false;
         balls = [];
         score = DIFFICULTIES[config.difficulty].startingPoints;
         ballsUsed = 0;
@@ -468,6 +513,7 @@
       }
 
       function spawnBall(x) {
+  if (gameOver || score <= 0) return false;
   const bx = clamp(x, boardRect.x + 16, boardRect.x + boardRect.width - 16);
 
   balls.push({
@@ -479,6 +525,7 @@
     alive: true,
     inSlots: false
   });
+  return true;
 }
 
       function revealAlongPath(x1, y1, x2, y2, radius) {
@@ -509,6 +556,15 @@
         revealMaskCtx.restore();
       }
 
+      function endRound() {
+        if (gameOver) return;
+        gameOver = true;
+        balls = [];
+        recordCurrentProgress();
+        setStatus(`Game Over — ${getRevealPercent()}% revealed. Start a New Round to play again.`, "bad");
+        updateUi();
+      }
+
       function resolveBallReward(ball) {
   const slotWidth = slotRect.width / currentPreset.slotCount;
   const idx = clamp(Math.floor((ball.x - slotRect.x) / slotWidth), 0, currentPreset.slotCount - 1);
@@ -524,9 +580,11 @@
   }
 
   lastResult = reward.label;
+  if (score <= 0) endRound();
 }
 
       function updateBalls() {
+  if (gameOver) return;
   const revealRadius = Number(revealRadiusEl.value);
   const slotWidth = slotRect.width / currentPreset.slotCount;
 
@@ -614,6 +672,7 @@
 
     if (b.y + b.r >= slotRect.y + slotRect.height - 16) {
       resolveBallReward(b);
+      if (gameOver) return;
       b.alive = false;
     }
 
@@ -841,9 +900,13 @@
 
       function updateUi() {
         scoreValue.textContent = String(score);
+        dropCenterBtn.disabled = gameOver;
+        dropTickerBtn.disabled = gameOver;
         ballsValue.textContent = String(ballsUsed);
         lastResultValue.textContent = lastResult;
         revealedValue.textContent = `${getRevealPercent()}%`;
+        recordCurrentProgress();
+        renderRecords();
       }
 
       function render() {
@@ -1014,6 +1077,15 @@
       }
 
       function hookEvents() {
+        clearRecordsBtn.addEventListener("click", () => {
+          if (!window.confirm("Clear all saved high scores for Easy, Normal, and Hard?")) return;
+          records = {};
+          try { localStorage.removeItem(RECORDS_KEY); }
+          catch (_) { /* Storage may be unavailable. */ }
+          renderRecords();
+          setStatus("Saved high scores cleared.", "good");
+        });
+
         difficultySelect.addEventListener("change", () => {
           const difficulty = DIFFICULTIES[difficultySelect.value];
           if (!difficulty) return;
@@ -1055,15 +1127,17 @@
         });
 
         dropCenterBtn.addEventListener("click", () => {
-          spawnBall(boardRect.x + boardRect.width / 2);
-          ballsUsed++;
-          updateUi();
+          if (spawnBall(boardRect.x + boardRect.width / 2)) {
+            ballsUsed++;
+            updateUi();
+          }
         });
 
         dropTickerBtn.addEventListener("click", () => {
-          spawnBall(autoDropX || (boardRect.x + boardRect.width / 2));
-          ballsUsed++;
-          updateUi();
+          if (spawnBall(autoDropX || (boardRect.x + boardRect.width / 2))) {
+            ballsUsed++;
+            updateUi();
+          }
         });
 
         clearImageBtn.addEventListener("click", () => {
@@ -1096,9 +1170,10 @@
           const insideX = x >= boardRect.x && x <= boardRect.x + boardRect.width;
 
           if (nearTop && insideX) {
-            spawnBall(x);
-            ballsUsed++;
-            updateUi();
+            if (spawnBall(x)) {
+              ballsUsed++;
+              updateUi();
+            }
           }
         });
       }
