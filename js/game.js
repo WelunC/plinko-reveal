@@ -1164,7 +1164,8 @@
           importConfig();
         });
 
-        canvas.addEventListener("click", evt => {
+        canvas.addEventListener("pointerdown", evt => {
+          if (evt.pointerType === "touch") evt.preventDefault();
           const { x, y } = getCanvasCoords(evt);
           const nearTop = y >= topDropY - 40 && y <= topDropY + 60;
           const insideX = x >= boardRect.x && x <= boardRect.x + boardRect.width;
