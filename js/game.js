@@ -573,11 +573,7 @@
 
   revealedSlots[idx] = true;
 
-  if (reward.type === "flat") {
-    score = Math.max(0, score - reward.value);
-  } else if (reward.type === "percent") {
-    score = Math.max(0, Math.round(score * (1 - reward.value / 100)));
-  }
+  score = PlinkoScoring.calculateRemainingPoints(score, reward);
 
   lastResult = reward.label;
   if (score <= 0) endRound();
